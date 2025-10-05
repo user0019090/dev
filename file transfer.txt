@@ -1,0 +1,254 @@
+1. Shared Folder
+
+Step 1: Create a Shared Folder on Your Host 
+Step 2: Enable Shared Folder in VirtualBox (for Both VMs)
+Step 3: Install VirtualBox Guest Additions in Ubuntu (if not already done)
+
+Run the following commands in each Ubuntu VM: 
+ 
+sudo apt update 
+sudo apt install build-essential dkms linux-headers-$(uname -r) 
+
+Then: 
+1. In VirtualBox menu (inside VM window), go to: 
+   Devices → Insert Guest Additions CD image         (in both VMs)
+
+Step 4: Access the Shared Folder
+
+ls /media 
+
+ls /media/sf_VMShared 
+
+Step 5: Fix Permissions (if Permission Denied) (in both VM)
+
+sudo usermod -aG vboxsf $USER
+
+Then reboot again: 
+sudo reboot 
+
+Now try again: 
+ls /media/sf_VMShared
+
+Step 6: Transfer Files Between VMs
+
+cat /media/sf_VMShared/filename.txt
+
+(To create a file and copy in shared folder)
+
+touch filename.txt
+gedit filename.txt
+cp filename.txt /media/sf_VMShared/
+
+___________________________________________________________________________________________
+
+
+2. NFS (Network File System) 
+
+Step 1: Install NFS Packages
+
+sudo apt update (both vm)
+
+On VM1 (Server): 
+sudo apt install nfs-kernel-server -y 
+
+On VM2 (Client): 
+sudo apt install nfs-common -y 
+
+
+Step 2: Create a Shared Directory on Server 
+
+On VM1 (Server): 
+sudo mkdir -p /mnt/sharedfolder 
+sudo chmod 777 /mnt/sharedfolder 
+
+
+Step 3: Configure NFS Exports (done in VM1) 
+
+Edit the exports file: 
+sudo nano /etc/exports 
+
+Add the following line (replace 192.168.56.0/24 with your VM network range): 
+/mnt/sharedfolder 192.168.56.0/24(rw,sync,no_subtree_check) 
+
+Apply the export rules: 
+sudo exportfs -a
+
+Restart NFS service: 
+sudo systemctl restart nfs-kernel-server 
+
+
+Step 4: Get Server’s IP Address 
+On VM1: 
+ip a 
+
+Allow firewall settings for NFS to avoid Connection timed out error. 
+sudo ufw allow from 192.168.56.0/24 to any port 2049  # Allow NFS main port 
+sudo ufw allow from 192.168.56.0/24 to any port 111   # Allow portmapper (used by NFS) 
+sudo ufw reload                                       # Reload firewall
+
+
+Step 5: Mount NFS Share on Client 
+
+On VM2 (Client): 
+sudo mkdir -p /mnt/nfsshare 
+sudo mount <vm1-ip>:/mnt/sharedfolder /mnt/nfsshare
+
+
+Step 6: Verify File Transfer 
+
+On VM2: 
+cd /mnt/nfsshare 
+ 
+echo "22IT770 – VIRTUALIZATION TECHNOLOGIES LAB" > file.txt 
+ 
+Now check on VM1 (Server) inside /mnt/sharedfolder/ — the file should be there. 
+
+(in vm1)
+ls -l
+cat file.txt
+
+___________________________________________________________________________________________
+
+3.SSH (Secure Shell)
+
+Step 1: Install SSH 
+
+On both VMs (VM1 & VM2): 
+sudo apt update 
+sudo apt install openssh-server -y 
+
+Check SSH status:(on both vm) 
+sudo systemctl status ssh 
+
+Step 2: Get Server’s IP 
+
+On VM1 (Server, username = tce): 
+
+ip a 
+ 
+Allow firewall settings for SSH to avoid Connection timed out error. 
+sudo ufw allow 22/tcp 
+sudo ufw reload 
+
+
+Step 3: Connect from VM2 to VM1 
+
+On VM2 (Client, username = ubuntu): 
+ssh tce@102.168.56.103
+
+
+Step 4: Transfer Files with SCP (From VM2) 
+ 
+(a) Copy file from VM2 → VM1 
+scp file.txt tce@192.168.56.103:/home/tce/
+
+(b) Copy file from VM1 → VM2 
+scp tce@192.168.56.103:/home/tce/serverfile.txt /home/ubuntu/ 
+
+
+___________________________________________________________________________________________
+
+4.FTP (File Transfer Protocol)
+
+Step 1: Install FTP Server on VM1 
+(VM1 = server, VM2 = client) 
+
+On VM1: 
+
+sudo apt update 
+sudo apt install vsftpd -y 
+ 
+Enable and start the service: 
+sudo systemctl enable vsftpd 
+sudo systemctl start vsftpd
+
+Step 2: Configure vsftpd 
+
+Edit the config file: 
+sudo nano /etc/vsftpd.conf 
+ 
+Make sure these lines are set (uncomment or add if missing): 
+
+local_enable=YES 
+write_enable=YES 
+chroot_local_user=YES 
+allow_writeable_chroot=YES 
+
+Save (CTRL+S, CTRL+X)  
+
+check:
+grep -v "^#" /etc/vsftpd.conf
+
+Restart the ftp server: 
+sudo systemctl restart vsftpd
+
+
+Step 3: Check VM1 IP Address 
+
+On VM1, run: 
+ip a 
+ 
+Allow firewall settings for FTP to avoid Connection timed out error. 
+
+sudo ufw allow 21/tcp 
+sudo ufw allow 20/tcp   # (for data transfer) 
+sudo ufw status
+
+
+Step 4: Connect from VM2 (FTP client) 
+
+On VM2, install ftp client: 
+sudo apt install ftp -y 
+ 
+Now connect: 
+ftp 192.168.56.103 
+Enter VM1’s username (tce) and password when prompted. 
+
+Step 5: FTP Commands 
+
+ls
+cd folder
+get filename
+put filename
+bye
+
+
+Step 6: Verify 
+
+___________________________________________________________________________________________
+
+5.HTTP
+
+VM1:
+
+ip addr
+
+python3 -m http.server 8000
+
+[if python3 not there,
+
+sudo apt update
+sudo apt install python3 -y
+
+]
+
+This will start an HTTP server at:
+
+http://<VM1_IP>:8000
+
+
+VM2:
+
+http://<VM1_IP>:8000
+
+OR
+
+wget http://<VM1_IP>:8000/file.txt
+
+
+___________________________________________________________________________________________
+
+
+
+
+

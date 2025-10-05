@@ -1,0 +1,71 @@
+cmd
+
+systeminfo
+
+Notepad
+
+pushd "%~dp0" 
+dir /b %SystemRoot%\servicing\Packages\*Hyper-V*.mum >hyper-v.txt 
+for /f %%i in ('findstr /i . hyper-v.txt 2^>nul') do dism /online /norestart /add
+package:"%SystemRoot%\servicing\Packages\%%i" 
+dism /online /enable-feature /featurename:Microsoft-Hyper-V-All /LimitAccess /ALL 
+pause 
+
+
+Save as : hyperv_install.bat
+
+Locate hyperv_install.bat. 
+Right-click → Run as administrator. 
+Wait until the script shows The operation completed successfully.
+Restart the system. 
+
+Verify Hyper-V Installation 
+Press Windows + S, type Hyper-V Manager, and open it. 
+
+
+Or run in PowerShell: 
+
+Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All 
+
+If the state is Enabled, Hyper-V is successfully installed.
+
+
+
+CREATION OF VM USING POWERSHELL
+
+
+Create a new VM 
+New-VM -Name Meta -MemoryStartupBytes 1024MB -Generation 1 -VHDPath "C:\Virt\meta.vhd" -SwitchName "Default Switch"  
+ 
+Start a VM 
+Start-VM -Name Meta
+ 
+Connect to the VM console 
+vmconnect localhost Meta
+ 
+Get VM status 
+Get-VM -Name Meta
+ 
+ 
+Create a checkpoint 
+Checkpoint-VM -Name Meta -SnapshotName "Checkpoint1" 
+ 
+Restore a checkpoint 
+Restore-VMCheckpoint -VMName Meta -Name " Checkpoint1" 
+ 
+Restart a VM 
+Restart-VM -Name Meta 
+ 
+ 
+Stop a VM 
+Stop-VM -Name Meta 
+ 
+Hyper-V host settings 
+Get-VMHost 
+ 
+List all VMs 
+Get-VM 
+ 
+Remove a VM 
+Remove-VM -Name Meta
+

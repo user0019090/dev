@@ -1,0 +1,88 @@
+a- Installation of KVM and creation of Virtual Instances
+
+(Virtualization technology)
+
+egrep -c '(vmx|svm)' /proc/cpuinfo
+
+egrep -c 'lm' /proc/cpuinfo
+
+uname -m
+
+uname -a
+
+ls /lib/modules/5.4.0-84-generic/kernel/arch/x86/kvm/kvm*
+
+(kvm installation)
+
+sudo apt update
+
+sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager qemu-system
+
+sudo apt install qemu-kvm libvirt-bin bridge-utils virt-manager qemu-system
+
+sudo nano /etc/libvirt/libvirtd.conf
+
+listen_addr = "0.0.0.0"
+unix_sock_group = "libvirt"
+unix_sock_ro_perms = "0777"
+unix_sock_rw_perms = "0777"
+unix_sock_dir = "/var/run/libvirt"
+auth_unix_ro = "none"
+auth_unix_rw = "none"
+
+sudo systemctl restart libvirtd
+
+virsh list
+
+virsh
+
+>version
+
+>nodeinfo
+
+
+(Navigate to virtual machine manager and proceed)
+
+https://download.cirros-cloud.net/0.5.1/
+
+cirros-0.5.1-x86_64-disk.img
+
+
+
+
+b- KVM – Create Images from ISO, Image Resizing, and Image Conversion
+
+https://releases.ubuntu.com/16.04/
+
+ubuntu-16.04.6-server-i386.iso
+
+
+(for storage)
+
+qemu-img create -f qcow2 ubuntu_vm.qcow2 10G 
+
+
+(IMAGE RESIZING)
+
+sudo qemu-img resize ubuntu_vm.qcow2 +10G
+
+qemu-img info ubuntu_vm.qcow2
+
+[optional
+
+(Once you've resized the image, boot into the VM and resize the partition/filesystem:) 
+ 
+  sudo growpart /dev/sda 1 
+  sudo resize2fs /dev/sda1 
+]
+
+
+(IMAGE CONVERSION)
+
+qemu-img convert -0 vdi ubuntu_vm.qcow2 ubuntu_vm.vdi -p
+
+qemu-img convert -0 vpc ubuntu_vm.qcow2 ubuntu_vm.vhd -p
+
+qemu-img convert -0 raw ubuntu_vm.qcow2 ubuntu_vm.img -p
+
+

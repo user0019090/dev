@@ -1,0 +1,71 @@
+Step 1: Check OVS installation
+
+sudo apt update
+sudo apt install openvswitch-switch -y
+sudo systemctl status openvswitch-switch
+
+Step 2: Create a Virtual Switch (bridge)
+
+Create a bridge named br0:
+
+sudo ovs-vsctl add-br br0
+
+Step 3: Add your existing interfaces to OVS
+
+You can attach your internal interface (enp0s8) and optionally the external NAT interface (enp0s3) to OVS.
+
+To make OVS handle internal communication:
+
+sudo ovs-vsctl add-port br0 enp0s8
+
+
+If you also want your VM to have Internet access via OVS:
+
+sudo ovs-vsctl add-port br0 enp0s3
+
+
+Step 4: Assign IP address to the bridge
+
+Since your interface enp0s8 currently holds 192.168.56.128, we’ll move that IP to the bridge.
+
+First, remove the IP from the physical interface:
+
+sudo ip addr flush dev enp0s8
+
+
+Assign it to the bridge:
+
+sudo ip addr add 192.168.56.128/24 dev br0
+sudo ip link set br0 up
+
+
+
+Step 5: Verify setup
+
+Check your configuration:
+
+ip a
+sudo ovs-vsctl show
+
+
+
+Step 6: Test connectivity
+
+If you have another VM in the same Host-only network (like 192.168.56.129), try pinging it:
+
+ping 192.168.56.129
+
+
+Step 7: Observe OVS details
+
+You can explore your OVS switch:
+
+sudo ovs-ofctl show br0
+sudo ovs-ofctl dump-flows br0
+
+
+Cleanup (if needed)
+
+To remove the setup:
+
+sudo ovs-vsctl del-br br0

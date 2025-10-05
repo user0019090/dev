@@ -1,0 +1,104 @@
+ 
+METHOD-1  
+ 
+Check your network interface name using the command : ip a
+
+
+
+Open and Edit the Network Interfaces File:
+
+sudo nano /etc/network/interfaces
+
+# Loopback Interface
+auto lo
+iface lo inet loopback
+
+# Physical Interface to be used in Bridge
+allow-hotplug enp0s3
+iface enp0s3 inet manual
+
+# Bridge Interface
+auto br-cloud
+iface br-cloud inet static
+address 10.0.2.20
+netmask 255.255.255.0
+gateway 10.0.2.2
+bridge_ports enp0s3
+
+
+Restart the networking:
+
+systemctl restart networking
+
+
+Verify the bridge addition ‘br-cloud’ using ip a command and its ip. :    ip a
+
+
+Check if default gateway is assigned via ‘br-cloud’
+
+route -n
+
+
+Check if physical interface is attached to ‘br-cloud’. 
+
+brctl show
+
+___________________________________________________________________________________________
+
+METHOD-2
+
+Switch to Root User:
+sudo -s
+
+Delete Existing Bridge (If Already Exists):
+
+ip link set br-cloud down
+brctl delbr br-cloud
+brctl delif br-cloud enpos3
+
+
+Create a New Bridge and Add Interface:
+
+brctl addbr br-cloud
+brctl addif br-cloud enp0s3
+
+
+Remove IP from Physical Interface
+
+ifconfig enp0s3 0
+
+
+Assign IP to the Bridge.
+
+Option A - Static IP
+
+ifconfig br-cloud 10.0.2.20 netmask 255.255.255.0
+route add default gw 10.0.2.2 dev br-cloud
+
+Option B - DHCP (Get IP Automatically)
+
+dhclient br-cloud
+
+
+
+Activate Bridge Interface:
+
+ip link set br-cloud up
+
+
+Verify the bridge addition ‘br-cloud’ using ip a command and its ip. :    ip a
+
+
+Check if default gateway is assigned via ‘br-cloud’
+
+route -n
+
+
+Check if physical interface is attached to ‘br-cloud’. 
+
+brctl show
+
+
+
+
+

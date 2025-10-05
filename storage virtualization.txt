@@ -1,0 +1,54 @@
+Step 1: Create a VM and Add Additional Storage
+
+Step 2: Start the VM and Login as Root
+
+sudo -s
+
+Step 3: Check Existing Disks and LVM 
+
+# List all disks 
+fdisk -l 
+
+# List physical volumes 
+pvdisplay 
+ 
+# List volume groups 
+vgdisplay 
+ 
+# List logical volumes 
+lvdisplay
+
+
+Step 4: Create Physical Volume 
+pvcreate /dev/sdb 
+
+
+Step 5: Extend the Volume Group 
+vgextend ubuntu-vg /dev/sdb 
+
+
+Step 6: Extend the Logical Volume (Root) 
+lvresize --size +3G /dev/ubuntu-vg/root 
+
+ +3G → amount of space to add 
+ /dev/cloud-vg/root → your logical volume 
+
+[
+Alternative: 
+lvextend -L +3G /dev/ubuntu-vg/root
+]
+
+Step 7: Check Current Disk Usage 
+
+df -h 
+Shows current available space on /.
+
+
+Step 8: Resize the Filesystem 
+resize2fs /dev/mapper/cloud--vg-root 
+
+Step 9: Verify Disk Space 
+df -h 
+
+Confirm that the root filesystem now has additional 3 GB. 
+
