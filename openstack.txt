@@ -1,0 +1,98 @@
+1. Update and Upgrade System
+sudo apt update && sudo apt upgrade -y
+
+2. Install MicroStack
+sudo snap install microstack --classic --edge
+
+3. Initialize MicroStack (Single Node / Control Node)
+sudo microstack init --auto --control
+
+4. Verify OpenStack Endpoints
+microstack.openstack endpoint list
+
+5. Get Dashboard URL
+microstack.openstack dashboard url
+
+
+If the dashboard URL is not displayed, check the VM IP:
+
+ip a
+
+
+Access in browser:
+
+https://<VM-IP>
+
+6. Get Admin Credentials
+
+Option 1:
+
+sudo snap get microstack config.credentials.password
+
+
+Option 2:
+
+sudo cat /var/snap/microstack/common/etc/microstack.rc
+
+7. Source the RC File (for CLI usage)
+source /var/snap/microstack/common/etc/microstack.rc
+
+8. Create or Upload SSH Key Pair
+
+Option A – Dashboard:
+Project → Compute → Key Pairs → Create Key Pair (download the .pem file)
+
+Option B – CLI:
+
+microstack.openstack keypair create busa-key > busa-key.pem
+chmod 600 busa-key.pem
+
+9. Download Ubuntu Cloud Image (if not uploading via Dashboard)
+wget https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img \
+     -O ubuntu-22.04.img
+
+
+Move it to the MicroStack directory if needed:
+
+sudo mv ubuntu-22.04.img /var/snap/microstack/common/
+
+10. Upload Image to OpenStack
+sudo microstack.openstack image create \
+  --file /var/snap/microstack/common/ubuntu-22.04.img \
+  --disk-format qcow2 \
+  --container-format bare \
+  --public \
+  "ubuntu-22.04"
+
+11. Verify Uploaded Image
+microstack.openstack image list
+
+12. Launch an Instance
+
+Make sure the key name is correct.
+
+microstack.openstack server create \
+  --flavor m1.small \
+  --image "ubuntu-22.04" \
+  --network external \
+  --key-name busa-key \
+  my-first-instance
+
+
+Note: Do not put a backslash after --key-name.
+
+13. Access Horizon Dashboard
+
+Open the browser and visit:
+
+https://<VM-IP>
+
+
+Login details:
+
+Username: admin
+
+Password: retrieved from RC file or snap command
+
+14. Check Instances
+microstack.openstack server list
